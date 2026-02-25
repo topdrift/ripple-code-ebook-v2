@@ -1,0 +1,27 @@
+---
+interface Props {
+  icon: string;
+  title: string;
+  color?: 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'yellow' | 'teal' | 'pink';
+}
+const { icon, title, color = 'blue' } = Astro.props;
+
+const colorMap: Record<string, string> = {
+  blue: 'bg-blue-50 dark:bg-blue-900/20 border-ripple-blue',
+  green: 'bg-green-50 dark:bg-green-900/20 border-ripple-green',
+  orange: 'bg-orange-50 dark:bg-orange-900/20 border-ripple-orange',
+  purple: 'bg-purple-50 dark:bg-purple-900/20 border-ripple-purple',
+  red: 'bg-red-50 dark:bg-red-900/20 border-ripple-red',
+  yellow: 'bg-yellow-50 dark:bg-yellow-900/20 border-ripple-yellow',
+  teal: 'bg-teal-50 dark:bg-teal-900/20 border-ripple-teal',
+  pink: 'bg-pink-50 dark:bg-pink-900/20 border-ripple-pink',
+};
+---
+
+<div class={`p-5 rounded-xl border-2 ${colorMap[color]} transition-transform hover:-translate-y-1`}>
+  <div class="text-3xl mb-2">{icon}</div>
+  <h4 class="font-[var(--font-display)] font-bold text-lg mb-2 text-slate-800 dark:text-slate-200">{title}</h4>
+  <div class="text-slate-600 dark:text-slate-400 text-sm">
+    <slot />
+  </div>
+</div>

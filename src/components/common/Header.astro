@@ -1,0 +1,37 @@
+---
+const siteBase = import.meta.env.BASE_URL;
+---
+
+<header class="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href={siteBase} class="flex items-center gap-2 text-ripple-blue hover:opacity-80 transition-opacity">
+      <span class="text-2xl">🌊</span>
+      <span class="font-[var(--font-display)] font-bold text-xl hidden sm:inline">The Ripple Code</span>
+    </a>
+
+    <nav class="flex items-center gap-4">
+      <a href={siteBase} class="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-ripple-blue transition-colors">
+        Home
+      </a>
+      <a href={`${siteBase}chapters/01-the-first-ripple`} class="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-ripple-blue transition-colors">
+        Start Reading
+      </a>
+      <button
+        id="theme-toggle"
+        aria-label="Toggle dark mode"
+        class="p-2 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+      >
+        <span class="dark:hidden">🌙</span>
+        <span class="hidden dark:inline">☀️</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.getElementById('theme-toggle');
+  toggle?.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+</script>

@@ -1,0 +1,18 @@
+---
+interface Props {
+  title?: string;
+}
+const { title = 'Amazing Fact!' } = Astro.props;
+---
+
+<div class="my-6 p-5 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-ripple-yellow rounded-r-xl">
+  <div class="flex items-start gap-3">
+    <span class="text-2xl flex-shrink-0">⭐</span>
+    <div>
+      <div class="font-bold text-ripple-orange dark:text-amber-400 text-sm uppercase tracking-wide mb-1">{title}</div>
+      <div class="text-slate-700 dark:text-slate-300">
+        <slot />
+      </div>
+    </div>
+  </div>
+</div>
