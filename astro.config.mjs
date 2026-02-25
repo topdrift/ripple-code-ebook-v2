@@ -7,7 +7,7 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://a-tndn.github.io',
-  base: '/ripple-code-ebook-v2',
+  base: '/ripple-code-ebook-v2/',
   output: 'static',
   integrations: [mdx(), preact(), sitemap()],
   vite: {
