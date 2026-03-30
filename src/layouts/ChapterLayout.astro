@@ -1,5 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import { t } from '../i18n/translations';
+import type { Lang } from '../i18n/translations';
 
 interface Props {
   title: string;
@@ -13,13 +15,16 @@ interface Props {
   nextSlug?: string;
   prevTitle?: string;
   nextTitle?: string;
+  lang?: Lang;
 }
 
-const { title, subtitle, chapter, part, partTitle, features, icon, prevSlug, nextSlug, prevTitle, nextTitle } = Astro.props;
+const { title, subtitle, chapter, part, partTitle, features, icon, prevSlug, nextSlug, prevTitle, nextTitle, lang = 'en' } = Astro.props;
 const siteBase = import.meta.env.BASE_URL;
+const chapterBase = lang === 'hi' ? `${siteBase}hi/chapters/` : `${siteBase}chapters/`;
+const homeBase = lang === 'hi' ? `${siteBase}hi/` : siteBase;
 ---
 
-<BaseLayout title={`Ch ${chapter}: ${title}`} description={subtitle}>
+<BaseLayout title={`${t(lang, 'chapter.chapter')} ${chapter}: ${title}`} description={subtitle} lang={lang} chapter={chapter} chapterTitle={title}>
   <!-- Reading progress bar -->
   <div id="reading-progress" class="fixed top-[57px] left-0 w-full h-1 z-40 bg-slate-200 dark:bg-slate-700">
     <div id="reading-progress-bar" class="h-full bg-gradient-to-r from-ripple-blue to-ripple-teal transition-all duration-150 w-0"></div>
@@ -29,11 +34,11 @@ const siteBase = import.meta.env.BASE_URL;
     <!-- Chapter header -->
     <div class="text-center mb-10">
       <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-ripple-blue/10 dark:bg-ripple-blue/20 rounded-full text-sm font-semibold text-ripple-blue mb-4">
-        Part {part}: {partTitle}
+        {t(lang, 'chapter.part')} {part}: {partTitle}
       </div>
       <div class="text-5xl mb-4">{icon}</div>
       <h1 class="font-[var(--font-display)] text-3xl md:text-4xl font-bold text-ripple-blue dark:text-blue-400 mb-3">
-        Chapter {chapter}: {title}
+        {t(lang, 'chapter.chapter')} {chapter}: {title}
       </h1>
       <p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">{subtitle}</p>
 
@@ -56,24 +61,24 @@ const siteBase = import.meta.env.BASE_URL;
     <!-- Chapter navigation -->
     <nav class="flex items-center justify-between mt-10 gap-4">
       {prevSlug ? (
-        <a href={`${siteBase}chapters/${prevSlug}`}
+        <a href={`${chapterBase}${prevSlug}`}
            class="flex items-center gap-2 px-5 py-3 bg-ripple-green text-white font-bold rounded-full hover:-translate-y-0.5 transition-all shadow-md">
           <span>←</span>
           <span class="hidden sm:inline">{prevTitle}</span>
-          <span class="sm:hidden">Prev</span>
+          <span class="sm:hidden">{t(lang, 'chapter.prev')}</span>
         </a>
       ) : <div />}
 
-      <a href={siteBase}
+      <a href={homeBase}
          class="px-5 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-full hover:-translate-y-0.5 transition-all">
-        All Chapters
+        {t(lang, 'chapter.allChapters')}
       </a>
 
       {nextSlug ? (
-        <a href={`${siteBase}chapters/${nextSlug}`}
+        <a href={`${chapterBase}${nextSlug}`}
            class="flex items-center gap-2 px-5 py-3 bg-ripple-orange text-white font-bold rounded-full hover:-translate-y-0.5 transition-all shadow-md">
           <span class="hidden sm:inline">{nextTitle}</span>
-          <span class="sm:hidden">Next</span>
+          <span class="sm:hidden">{t(lang, 'chapter.next')}</span>
           <span>→</span>
         </a>
       ) : <div />}

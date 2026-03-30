@@ -1,35 +1,43 @@
 ---
+import { t } from '../../i18n/translations';
+import type { Lang } from '../../i18n/translations';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'en' } = Astro.props;
 ---
 
 <footer class="mt-16 bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-t-3xl">
   <div class="max-w-6xl mx-auto px-6 py-12">
     <div class="text-center mb-8">
-      <h3 class="font-[var(--font-display)] text-2xl font-bold mb-2">🌊 The Ripple Code</h3>
-      <p class="text-slate-400">An interactive educational experience for young minds</p>
-      <p class="text-slate-500 text-sm mt-1">Science-backed · Kid-friendly · Interactive Learning</p>
+      <h3 class="font-[var(--font-display)] text-2xl font-bold mb-2">🌊 {t(lang, 'site.title')}</h3>
+      <p class="text-slate-400">{t(lang, 'footer.tagline')}</p>
+      <p class="text-slate-500 text-sm mt-1">{t(lang, 'footer.subtitle')}</p>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-lg mx-auto mb-8">
       <div class="text-center">
         <div class="text-2xl font-bold text-ripple-yellow">36</div>
-        <div class="text-xs text-slate-400">Chapters</div>
+        <div class="text-xs text-slate-400">{t(lang, 'footer.chapters')}</div>
       </div>
       <div class="text-center">
         <div class="text-2xl font-bold text-ripple-yellow">50+</div>
-        <div class="text-xs text-slate-400">Activities</div>
+        <div class="text-xs text-slate-400">{t(lang, 'footer.activities')}</div>
       </div>
       <div class="text-center">
         <div class="text-2xl font-bold text-ripple-yellow">100%</div>
-        <div class="text-xs text-slate-400">Verified</div>
+        <div class="text-xs text-slate-400">{t(lang, 'footer.verified')}</div>
       </div>
       <div class="text-center">
         <div class="text-2xl font-bold text-ripple-yellow">6-11</div>
-        <div class="text-xs text-slate-400">Ages</div>
+        <div class="text-xs text-slate-400">{t(lang, 'footer.ages')}</div>
       </div>
     </div>
 
     <div class="text-center text-slate-500 text-sm border-t border-slate-700 pt-6">
-      <p>Built with care for the next generation of positive change-makers</p>
+      <p>{t(lang, 'footer.built')}</p>
     </div>
   </div>
 </footer>

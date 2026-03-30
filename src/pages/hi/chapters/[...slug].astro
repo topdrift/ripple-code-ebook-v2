@@ -1,24 +1,25 @@
 ---
 import { getCollection, render } from 'astro:content';
-import ChapterLayout from '../../layouts/ChapterLayout.astro';
+import ChapterLayout from '../../../layouts/ChapterLayout.astro';
 
 export async function getStaticPaths() {
-  const chapters = await getCollection('chapters');
+  const chapters = await getCollection('chapters-hi');
   const sorted = chapters.sort((a, b) => a.data.chapter - b.data.chapter);
 
   return sorted.map((entry, index) => ({
     params: { slug: entry.id },
     props: {
       entry,
+      lang: 'hi' as const,
       prevSlug: index > 0 ? sorted[index - 1].id : undefined,
       nextSlug: index < sorted.length - 1 ? sorted[index + 1].id : undefined,
-      prevTitle: index > 0 ? `Ch ${sorted[index - 1].data.chapter}` : undefined,
-      nextTitle: index < sorted.length - 1 ? `Ch ${sorted[index + 1].data.chapter}` : undefined,
+      prevTitle: index > 0 ? `अध्याय ${sorted[index - 1].data.chapter}` : undefined,
+      nextTitle: index < sorted.length - 1 ? `अध्याय ${sorted[index + 1].data.chapter}` : undefined,
     },
   }));
 }
 
-const { entry, prevSlug, nextSlug, prevTitle, nextTitle } = Astro.props;
+const { entry, lang, prevSlug, nextSlug, prevTitle, nextTitle } = Astro.props;
 const { Content } = await render(entry);
 ---
 
@@ -34,7 +35,7 @@ const { Content } = await render(entry);
   nextSlug={nextSlug}
   prevTitle={prevTitle}
   nextTitle={nextTitle}
-  lang="en"
+  lang={lang}
 >
   <Content />
 </ChapterLayout>
