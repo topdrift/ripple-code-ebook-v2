@@ -36,7 +36,7 @@ CHAPTER TOPICS:
 // OpenRouter API for AI tutor
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_DEFAULT_KEY = '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';
-const OPENROUTER_MODEL = 'anthropic/claude-haiku-4-5-20251001';
+const OPENROUTER_MODEL = 'anthropic/claude-3-haiku'; // cheapest Claude, $0.25/M tokens
 
 const TUTOR_CONFIG_KEY = 'ripple-tutor-config';
 
