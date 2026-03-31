@@ -71,28 +71,92 @@ function saveTutorConfig(c: { apiKey?: string; proxyUrl?: string }) {
   localStorage.setItem(TUTOR_CONFIG_KEY, JSON.stringify(c));
 }
 
-// --- TTS ---
-function speak(text: string, lang: string, onStart?: () => void, onEnd?: () => void) {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const clean = text.replace(/[🌊✨🎯🤝💡🧠]/g, '').trim();
-  if (!clean) return;
-  const utt = new SpeechSynthesisUtterance(clean);
+// --- TTS (Google Neural Voice — client-side, free, Hindi + English) ---
+let currentAudio: HTMLAudioElement | null = null;
+const TTS_MAX_CHARS = 180;
+
+function cleanForTTS(text: string): string {
+  return text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}]/gu, '').replace(/[*#_~`]/g, '').trim();
+}
+
+function chunkForTTS(text: string): string[] {
+  const clean = cleanForTTS(text);
+  if (!clean) return [];
+  if (clean.length <= TTS_MAX_CHARS) return [clean];
+
+  // Split on sentence boundaries
+  const sentences = clean.match(/[^.!?।]+[.!?।]?\s*/g) || [clean];
+  const chunks: string[] = [];
+  let current = '';
+  for (const s of sentences) {
+    if ((current + s).length > TTS_MAX_CHARS && current) {
+      chunks.push(current.trim());
+      current = s;
+    } else {
+      current += s;
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+  return chunks;
+}
+
+function getGoogleTTSUrl(text: string, lang: string): string {
+  const tl = lang === 'hi' ? 'hi' : 'en';
+  return `https://translate.google.com/translate_tts?ie=UTF-8&tl=${tl}&client=tw-ob&q=${encodeURIComponent(text)}`;
+}
+
+async function speak(text: string, lang: string, onStart?: () => void, onEnd?: () => void) {
+  if (typeof window === 'undefined') return;
+  stopSpeaking();
+
+  const chunks = chunkForTTS(text);
+  if (chunks.length === 0) { onEnd?.(); return; }
+
+  onStart?.();
+
+  // Play chunks sequentially using Google's neural TTS
+  let idx = 0;
+  const playNext = () => {
+    if (idx >= chunks.length) { currentAudio = null; onEnd?.(); return; }
+    const url = getGoogleTTSUrl(chunks[idx], lang);
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.onended = () => { idx++; playNext(); };
+    audio.onerror = () => {
+      // If Google TTS fails, fall back to browser TTS for remaining text
+      const remaining = chunks.slice(idx).join(' ');
+      currentAudio = null;
+      fallbackBrowserTTS(remaining, lang, onEnd);
+    };
+    audio.play().catch(() => {
+      const remaining = chunks.slice(idx).join(' ');
+      currentAudio = null;
+      fallbackBrowserTTS(remaining, lang, onEnd);
+    });
+  };
+  playNext();
+}
+
+function fallbackBrowserTTS(text: string, lang: string, onEnd?: () => void) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) { onEnd?.(); return; }
+  const utt = new SpeechSynthesisUtterance(text);
   utt.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
   utt.rate = 0.9;
   utt.pitch = 1.1;
-  // Try to find a good voice
   const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v => v.lang.startsWith(lang === 'hi' ? 'hi' : 'en') && v.name.includes('Female'))
-    || voices.find(v => v.lang.startsWith(lang === 'hi' ? 'hi' : 'en'));
-  if (preferred) utt.voice = preferred;
-  utt.onstart = () => onStart?.();
+  const pref = voices.find(v => v.lang.startsWith(lang === 'hi' ? 'hi' : 'en'));
+  if (pref) utt.voice = pref;
   utt.onend = () => onEnd?.();
   utt.onerror = () => onEnd?.();
   window.speechSynthesis.speak(utt);
 }
 
 function stopSpeaking() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
   if (typeof window !== 'undefined' && window.speechSynthesis) {
     window.speechSynthesis.cancel();
   }
