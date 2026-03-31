@@ -33,6 +33,11 @@ CHAPTER TOPICS:
 22-29: Real-world (networks, systems, compass, fractals, echo engineering, architect, life, relationships)
 30-36: Mastery (finance, geopolitics, AI, culture shifts, handbook, lens, path forward)`;
 
+// OpenRouter API for AI tutor
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_DEFAULT_KEY = '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';
+const OPENROUTER_MODEL = 'anthropic/claude-haiku-4-5-20251001';
+
 const TUTOR_CONFIG_KEY = 'ripple-tutor-config';
 
 function getTutorConfig(): { apiKey?: string; proxyUrl?: string } {
@@ -123,10 +128,10 @@ export default function AiTutor({ chapter, chapterTitle, lang = 'en' }: Props) {
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 100);
   }, [isOpen]);
 
-  const callClaudeApi = async (allMessages: Message[]): Promise<string> => {
+  const callTutorApi = async (allMessages: Message[]): Promise<string> => {
     const { apiKey, proxyUrl } = config;
 
-    // If proxy URL is set (for hosted version), use it
+    // If custom proxy URL is set, use it
     if (proxyUrl) {
       const res = await fetch(proxyUrl, {
         method: 'POST',
@@ -140,38 +145,36 @@ export default function AiTutor({ chapter, chapterTitle, lang = 'en' }: Props) {
       });
       if (!res.ok) throw new Error('Proxy error');
       const data = await res.json();
-      return data.reply || data.content?.[0]?.text || 'Something went wrong!';
+      return data.reply || data.choices?.[0]?.message?.content || 'Something went wrong!';
     }
 
-    // If API key is set directly, call Claude API
-    if (apiKey) {
-      const systemMsg = chapter
-        ? `${SYSTEM_PROMPT}\n\nThe student is currently reading Chapter ${chapter}: "${chapterTitle}".`
-        : SYSTEM_PROMPT;
+    // Use OpenRouter API (default key or user-provided key)
+    const key = apiKey || OPENROUTER_DEFAULT_KEY;
+    const systemMsg = chapter
+      ? `${SYSTEM_PROMPT}\n\nThe student is currently reading Chapter ${chapter}: "${chapterTitle}".`
+      : SYSTEM_PROMPT;
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
-          system: systemMsg,
-          messages: allMessages.slice(-10).map(m => ({ role: m.role, content: m.content })),
-        }),
-      });
+    const res = await fetch(OPENROUTER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`,
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'The Ripple Code - AI Tutor',
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        max_tokens: 300,
+        messages: [
+          { role: 'system', content: systemMsg },
+          ...allMessages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+        ],
+      }),
+    });
 
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
-      const data = await res.json();
-      return data.content?.[0]?.text || 'Hmm, try asking again! 🌊';
-    }
-
-    // No API key — use offline replies
-    throw new Error('no-api-key');
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || 'Hmm, try asking again! 🌊';
   };
 
   const sendMessage = async () => {
@@ -185,7 +188,7 @@ export default function AiTutor({ chapter, chapterTitle, lang = 'en' }: Props) {
     setIsLoading(true);
 
     try {
-      const reply = await callClaudeApi(updatedMessages);
+      const reply = await callTutorApi(updatedMessages);
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {
       const fallback = generateOfflineReply(text, chapter, chapterTitle, lang);
@@ -237,7 +240,7 @@ export default function AiTutor({ chapter, chapterTitle, lang = 'en' }: Props) {
   const hasSpeech = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
-  const hasApi = !!(config.apiKey || config.proxyUrl);
+  const hasApi = true; // Always true — OpenRouter default key is built-in
 
   return (
     <>
@@ -389,13 +392,13 @@ function SettingsPanel({ apiKey, proxyUrl, onSave, onClose, lang }: {
     <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 space-y-3">
       <div>
         <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1">
-          {lang === 'hi' ? 'Anthropic API Key' : 'Anthropic API Key'}
+          {lang === 'hi' ? 'OpenRouter API Key (वैकल्पिक)' : 'OpenRouter API Key (optional)'}
         </label>
         <input
           type="password"
           value={key}
           onInput={(e) => setKey((e.target as HTMLInputElement).value)}
-          placeholder="sk-ant-..."
+          placeholder="sk-or-..."
           class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-ripple-blue/50"
         />
       </div>
