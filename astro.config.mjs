@@ -4,11 +4,13 @@ import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 import preact from '@astrojs/preact';
 import sitemap from '@astrojs/sitemap';
+import vercel from '@astrojs/vercel';
 
 export default defineConfig({
-  site: 'https://a-tndn.github.io',
-  base: '/ripple-code-ebook-v2/',
+  site: 'https://ripplecode.in',
+  base: '/',
   output: 'static',
+  adapter: vercel(),
   integrations: [mdx(), preact(), sitemap()],
   vite: {
     plugins: [tailwindcss()],

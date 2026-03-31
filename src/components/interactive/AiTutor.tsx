@@ -33,10 +33,12 @@ CHAPTER TOPICS:
 22-29: Real-world (networks, systems, compass, fractals, echo engineering, architect, life, relationships)
 30-36: Mastery (finance, geopolitics, AI, culture shifts, handbook, lens, path forward)`;
 
-// OpenRouter API for AI tutor
+// Server-side API (Vercel serverless function) — key stays hidden
+const TUTOR_API_ENDPOINT = '/api/tutor';
+// Fallback: direct OpenRouter from client
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_DEFAULT_KEY = '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';
-const OPENROUTER_MODEL = 'anthropic/claude-3-haiku'; // cheapest Claude, $0.25/M tokens
+const OPENROUTER_FALLBACK_KEY = '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';
+const OPENROUTER_MODEL = 'anthropic/claude-3-haiku';
 
 const TUTOR_CONFIG_KEY = 'ripple-tutor-config';
 
@@ -130,26 +132,37 @@ export default function AiTutor({ chapter, chapterTitle, lang = 'en' }: Props) {
 
   const callTutorApi = async (allMessages: Message[]): Promise<string> => {
     const { apiKey, proxyUrl } = config;
+    const msgPayload = allMessages.slice(-10).map(m => ({ role: m.role, content: m.content }));
 
     // If custom proxy URL is set, use it
     if (proxyUrl) {
       const res = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: allMessages.slice(-10).map(m => ({ role: m.role, content: m.content })),
-          chapter,
-          chapterTitle,
-          lang,
-        }),
+        body: JSON.stringify({ messages: msgPayload, chapter, chapterTitle, lang }),
       });
       if (!res.ok) throw new Error('Proxy error');
       const data = await res.json();
       return data.reply || data.choices?.[0]?.message?.content || 'Something went wrong!';
     }
 
-    // Use OpenRouter API (default key or user-provided key)
-    const key = apiKey || OPENROUTER_DEFAULT_KEY;
+    // Try server-side API first (keeps key hidden)
+    try {
+      const res = await fetch(TUTOR_API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: msgPayload, chapter, chapterTitle, lang }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.reply) return data.reply;
+      }
+    } catch {
+      // Server API not available, fall through to client-side
+    }
+
+    // Fallback: direct OpenRouter from client (or user-provided key)
+    const key = apiKey || OPENROUTER_FALLBACK_KEY;
     const systemMsg = chapter
       ? `${SYSTEM_PROMPT}\n\nThe student is currently reading Chapter ${chapter}: "${chapterTitle}".`
       : SYSTEM_PROMPT;
@@ -167,7 +180,7 @@ export default function AiTutor({ chapter, chapterTitle, lang = 'en' }: Props) {
         max_tokens: 300,
         messages: [
           { role: 'system', content: systemMsg },
-          ...allMessages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+          ...msgPayload,
         ],
       }),
     });
